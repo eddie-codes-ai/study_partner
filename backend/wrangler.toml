@@ -1,0 +1,16 @@
+name = "kua-tutor-backend"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Workers AI — free tier (10,000 neurons/day, resets daily at 00:00 UTC),
+# no separate account or API key needed beyond the Cloudflare account
+# already used to deploy this Worker.
+[ai]
+binding = "AI"
+
+# Secrets (set with `npx wrangler secret put <NAME>`, never committed here):
+#   APP_SHARED_SECRET  - any random string; the app sends it on every request
+#                        so this endpoint can't be hit by strangers who find the URL
+#   MOCK_MODE          - set to "true" to return canned fake responses instead
+#                        of calling Workers AI at all (for free, instant testing)

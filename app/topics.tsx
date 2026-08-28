@@ -59,13 +59,11 @@ export default function TopicsScreen() {
                 <Text style={[styles.topicMeta, { color: colors.textFaint }]}>{t.cardCount} cards</Text>
               </View>
               <View style={styles.topicActions}>
-                {t.hasNote && (
-                  <Pressable
-                    onPress={() => router.push(`/note?subject=${subject}&topic=${encodeURIComponent(t.topic)}`)}
-                    style={[styles.actionButton, styles.ghostButton, { borderColor: colors.tint }]}>
-                    <Text style={[styles.actionLabel, { color: colors.tint }]}>Read</Text>
-                  </Pressable>
-                )}
+                <Pressable
+                  onPress={() => router.push(`/note?subject=${subject}&topic=${encodeURIComponent(t.topic)}`)}
+                  style={[styles.actionButton, styles.ghostButton, { borderColor: colors.tint }]}>
+                  <Text style={[styles.actionLabel, { color: colors.tint }]}>Read</Text>
+                </Pressable>
                 <Pressable
                   onPress={() => router.push(`/session?subject=${subject}&topic=${encodeURIComponent(t.topic)}`)}
                   style={[styles.actionButton, { backgroundColor: colors.tint }]}>

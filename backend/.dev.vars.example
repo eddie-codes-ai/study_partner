@@ -1,0 +1,2 @@
+APP_SHARED_SECRET=pick-any-random-string-here
+MOCK_MODE=true
