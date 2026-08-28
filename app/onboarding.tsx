@@ -12,8 +12,9 @@ const GRADES = ['4', '5', '6'];
 export default function OnboardingScreen() {
   const router = useRouter();
   const colors = Colors[useColorScheme()];
+  const currentGrade = useAppStore((s) => s.grade);
   const setGrade = useAppStore((s) => s.setGrade);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(currentGrade);
 
   const confirm = () => {
     if (!selected) return;
@@ -24,6 +25,11 @@ export default function OnboardingScreen() {
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
       <View style={styles.container}>
+        {currentGrade !== null && (
+          <Pressable onPress={() => router.back()} hitSlop={12} style={{ alignSelf: 'flex-end' }}>
+            <Text style={{ color: colors.textFaint, fontSize: 18 }}>✕</Text>
+          </Pressable>
+        )}
         <Text style={[styles.eyebrow, { color: colors.textFaint }]}>Kua</Text>
         <Text style={[styles.title, { color: colors.text }]}>Which grade are you in?</Text>
 

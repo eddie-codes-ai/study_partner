@@ -28,7 +28,9 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={[styles.greeting, { color: colors.textFaint }]}>Habari! 👋 Grade {grade}</Text>
+        <Pressable onPress={() => router.push('/onboarding')} hitSlop={8}>
+          <Text style={[styles.greeting, { color: colors.textFaint }]}>Habari! 👋 Grade {grade} · change</Text>
+        </Pressable>
 
         <View style={[styles.hero, { backgroundColor: colors.tintSoft }]}>
           <Text style={[styles.streak, { color: colors.gold }]}>🔥 {streak}-day streak</Text>
