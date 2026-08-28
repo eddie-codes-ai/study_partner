@@ -1,6 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 
-import { SEED_CARDS, SEED_VERSION, SUBJECTS } from './seed';
+import { SEED_CARDS, SEED_NOTES, SEED_VERSION, SUBJECTS } from './seed';
 
 const db = SQLite.openDatabaseSync('kua.db');
 
@@ -21,6 +21,17 @@ export type SubjectProgress = {
   emoji: string;
   stage: 'seed' | 'sprout' | 'tree';
   dueCount: number;
+};
+
+export type TopicSummary = {
+  topic: string;
+  cardCount: number;
+  hasNote: boolean;
+};
+
+export type Note = {
+  title: string;
+  body: string;
 };
 
 type CardRow = {
@@ -71,6 +82,14 @@ export function initDb() {
       correct INTEGER NOT NULL,
       reviewed_at TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS notes (
+      id TEXT PRIMARY KEY,
+      subject_id TEXT NOT NULL,
+      grade INTEGER NOT NULL,
+      topic TEXT NOT NULL,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL
+    );
   `);
 
   // Devices that seeded before the `grade` column existed need it added —
@@ -95,18 +114,25 @@ function syncSeedContent() {
 
   const installedVersion = Number(getMeta('seed_version') ?? '0');
   const currentCardCount = db.getFirstSync<{ n: number }>('SELECT COUNT(*) as n FROM cards')?.n ?? 0;
-  // Reseed if the version is behind, OR if the row count doesn't match what
-  // SEED_CARDS actually holds right now. The count check guards against a
-  // torn reseed (seen in practice from a Fast Refresh race mid-edit) leaving
-  // seed_version stamped ahead of what actually got written — without it,
-  // that wedged state survives every later reload since the version check
-  // alone would keep saying "already up to date."
-  if (installedVersion >= SEED_VERSION && currentCardCount === SEED_CARDS.length) return;
+  const currentNoteCount = db.getFirstSync<{ n: number }>('SELECT COUNT(*) as n FROM notes')?.n ?? 0;
+  // Reseed if the version is behind, OR if the row counts don't match what
+  // SEED_CARDS/SEED_NOTES actually hold right now. The count check guards
+  // against a torn reseed (seen in practice from a Fast Refresh race
+  // mid-edit) leaving seed_version stamped ahead of what actually got
+  // written — without it, that wedged state survives every later reload
+  // since the version check alone would keep saying "already up to date."
+  if (
+    installedVersion >= SEED_VERSION &&
+    currentCardCount === SEED_CARDS.length &&
+    currentNoteCount === SEED_NOTES.length
+  ) {
+    return;
+  }
 
-  // Seed content changed since this device last synced. Cards are fully
-  // replaced (old review history for them goes too); grade/streak/stars in
-  // `meta` are untouched since they aren't derived from these rows.
-  db.execSync('DELETE FROM reviews; DELETE FROM cards;');
+  // Seed content changed since this device last synced. Cards/notes are
+  // fully replaced (old review history for cards goes too); grade/streak/
+  // stars in `meta` are untouched since they aren't derived from these rows.
+  db.execSync('DELETE FROM reviews; DELETE FROM cards; DELETE FROM notes;');
   const now = new Date().toISOString();
   for (const c of SEED_CARDS) {
     db.runSync(
@@ -114,6 +140,16 @@ function syncSeedContent() {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
       [c.id, c.subjectId, c.grade, c.topic, c.question, JSON.stringify(c.options), c.correctIndex, c.explanation, now]
     );
+  }
+  for (const n of SEED_NOTES) {
+    db.runSync('INSERT INTO notes (id, subject_id, grade, topic, title, body) VALUES (?, ?, ?, ?, ?, ?)', [
+      n.id,
+      n.subjectId,
+      n.grade,
+      n.topic,
+      n.title,
+      n.body,
+    ]);
   }
   setMeta('seed_version', String(SEED_VERSION));
 }
@@ -179,6 +215,18 @@ export function getDueCards(grade: number, limit = 8, subjectId?: string): Card[
   return rows.map(rowToCard);
 }
 
+// On-demand practice from the topic list — every card in that topic,
+// regardless of due date (unlike getDueCards, which only returns what
+// spaced repetition says is due today). Answering still updates scheduling
+// via recordAnswer, so practicing early just moves a card further ahead.
+export function getTopicCards(grade: number, subjectId: string, topic: string): Card[] {
+  const rows = db.getAllSync<CardRow>(
+    'SELECT * FROM cards WHERE grade = ? AND subject_id = ? AND topic = ? ORDER BY id ASC',
+    [grade, subjectId, topic]
+  );
+  return rows.map(rowToCard);
+}
+
 export function recordAnswer(cardId: string, correct: boolean) {
   const card = db.getFirstSync<{ interval_days: number }>(
     'SELECT interval_days FROM cards WHERE id = ?',
@@ -241,4 +289,24 @@ export function getSubjectProgress(grade: number): SubjectProgress[] {
       !stat || stat.total === 0 || avgInterval < 1 ? 'seed' : avgInterval >= 7 ? 'tree' : 'sprout';
     return { id: s.id, name: s.name, emoji: s.emoji, stage, dueCount: stat?.due_count ?? 0 };
   });
+}
+
+export function getTopicsForSubject(grade: number, subjectId: string): TopicSummary[] {
+  const cardCounts = db.getAllSync<{ topic: string; n: number }>(
+    'SELECT topic, COUNT(*) as n FROM cards WHERE grade = ? AND subject_id = ? GROUP BY topic ORDER BY MIN(id) ASC',
+    [grade, subjectId]
+  );
+  const noteTopics = new Set(
+    db
+      .getAllSync<{ topic: string }>('SELECT topic FROM notes WHERE grade = ? AND subject_id = ?', [grade, subjectId])
+      .map((n) => n.topic)
+  );
+  return cardCounts.map((c) => ({ topic: c.topic, cardCount: c.n, hasNote: noteTopics.has(c.topic) }));
+}
+
+export function getNote(grade: number, subjectId: string, topic: string): Note | null {
+  return db.getFirstSync<Note>(
+    'SELECT title, body FROM notes WHERE grade = ? AND subject_id = ? AND topic = ?',
+    [grade, subjectId, topic]
+  );
 }

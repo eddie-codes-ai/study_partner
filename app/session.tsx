@@ -19,12 +19,17 @@ export default function SessionScreen() {
   const refresh = useAppStore((s) => s.refresh);
   const streak = useAppStore((s) => s.streak);
   const grade = useAppStore((s) => s.grade);
-  const { subject } = useLocalSearchParams<{ subject?: string }>();
+  const { subject, topic } = useLocalSearchParams<{ subject?: string; topic?: string }>();
 
-  // Snapshot the due cards once, at mount, so the list doesn't shift under
-  // the student mid-session as due_at times update. Scoped to `subject` when
-  // launched from a subject tile on Home, otherwise mixed across subjects.
-  const [cards] = useState(() => (grade ? db.getDueCards(Number(grade), 8, subject) : []));
+  // Snapshot the cards once, at mount, so the list doesn't shift under the
+  // student mid-session. Three ways in: a specific topic (on-demand practice
+  // from the topic list, ignores due dates), a specific subject (Home tile,
+  // due-date-scoped), or neither (mixed due review across every subject).
+  const [cards] = useState(() => {
+    if (!grade) return [];
+    if (topic && subject) return db.getTopicCards(Number(grade), subject, topic);
+    return db.getDueCards(Number(grade), 8, subject);
+  });
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>('question');
   const [selected, setSelected] = useState<number | null>(null);
@@ -43,7 +48,9 @@ export default function SessionScreen() {
     return (
       <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
         <View style={styles.container}>
-          <Text style={[styles.title, { color: colors.text }]}>Nothing due right now.</Text>
+          <Text style={[styles.title, { color: colors.text }]}>
+            {topic ? 'No practice cards for this topic yet.' : 'Nothing due right now.'}
+          </Text>
           <Pressable style={[styles.button, { backgroundColor: colors.tint }]} onPress={() => router.back()}>
             <Text style={[styles.buttonLabel, { color: colors.surface }]}>Back</Text>
           </Pressable>

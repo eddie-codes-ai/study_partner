@@ -7,7 +7,7 @@
 // seed_version is behind — so content edits actually reach devices that
 // already seeded an earlier version, without wiping grade/streak/stars.
 
-export const SEED_VERSION = 8;
+export const SEED_VERSION = 9;
 
 export type Subject = {
   id: string;
@@ -35,6 +35,85 @@ export type SeedCard = {
   correctIndex: number;
   explanation: string;
 };
+
+// A short readable explainer per (grade, subject, topic) — the "Read"
+// counterpart to that topic's practice cards. Piloting with Mathematics
+// only; other subjects' topics have cards but no notes yet.
+export type SeedNote = {
+  id: string;
+  subjectId: string;
+  grade: number;
+  topic: string;
+  title: string;
+  body: string;
+};
+
+export const SEED_NOTES: SeedNote[] = [
+  {
+    id: 'math-4-note-wholenumbers',
+    subjectId: 'math',
+    grade: 4,
+    topic: 'Whole Numbers',
+    title: 'Whole Numbers',
+    body: 'Whole numbers are the numbers we use for counting — 0, 1, 2, 3, and so on, with no fractions or decimals. In Grade 4, we work with bigger whole numbers, like 4,532 or 8,900.\n\nPlace value tells us what each digit in a number is worth. In 4,532, the 4 is in the thousands place (4,000), the 5 is in the hundreds place (500), the 3 is in the tens place (30), and the 2 is in the ones place (2).\n\nWhen adding or subtracting big numbers, line up the ones, tens, hundreds, and thousands columns carefully. For multiplication, break the number into smaller parts — for example, 24 × 6 is the same as (20 × 6) + (4 × 6).\n\nComparing numbers means looking at the place values from left to right. The number with the bigger digit in the highest place value is the larger number.',
+  },
+  {
+    id: 'math-4-note-fractions',
+    subjectId: 'math',
+    grade: 4,
+    topic: 'Fractions',
+    title: 'Fractions',
+    body: 'A fraction shows a part of a whole. In the fraction 3/4, the bottom number (4) tells us how many equal parts the whole is split into, and the top number (3) tells us how many of those parts we have.\n\nEquivalent fractions look different but mean the same amount — for example, 1/2 and 2/4 are equivalent, because both represent exactly half of something.\n\nTo compare fractions with the same top number, the fraction with the smaller bottom number is bigger — this is because splitting something into fewer pieces makes each piece larger.\n\nWe can add fractions that share the same bottom number by simply adding the top numbers: 1/4 + 2/4 = 3/4.\n\nA fraction like 4/4 equals a whole number (1), because all the equal parts are used up.',
+  },
+  {
+    id: 'math-4-note-lengthmass',
+    subjectId: 'math',
+    grade: 4,
+    topic: 'Length & Mass',
+    title: 'Length & Mass',
+    body: 'Length tells us how long or how far something is. We measure short lengths in centimetres (cm) and longer distances in metres (m). There are 100 centimetres in every metre.\n\nMass tells us how heavy something is. We measure light objects in grams (g) and heavier objects in kilograms (kg). There are 1,000 grams in every kilogram.\n\nTo change a bigger unit into a smaller one, we multiply — for example, 2 kg becomes 2,000 g because we multiply by 1,000. To change a smaller unit into a bigger one, we divide.\n\nWhen comparing measurements, always check they are in the same unit first. For example, comparing 1 kg to 900 g: since 1 kg = 1,000 g, 1 kg is heavier than 900 g.',
+  },
+  {
+    id: 'math-4-note-capacitytime',
+    subjectId: 'math',
+    grade: 4,
+    topic: 'Capacity & Time',
+    title: 'Capacity & Time',
+    body: 'Capacity tells us how much liquid a container can hold. We measure small amounts in millilitres (ml) and larger amounts in litres (l). There are 1,000 millilitres in every litre.\n\nTime helps us organise our day. There are 60 minutes in every hour, and 24 hours in a full day. When adding time, like figuring out when a 45-minute lesson that starts at 8:00 am will end, count forward in minutes: 8:00 am + 45 minutes = 8:45 am.\n\nJust like with length and mass, we can convert between units of capacity by multiplying or dividing by 1,000 — 2 litres is the same as 2,000 millilitres.\n\nReading a clock and understanding time helps us plan our activities and know how long things take.',
+  },
+  {
+    id: 'math-4-note-money',
+    subjectId: 'math',
+    grade: 4,
+    topic: 'Money',
+    title: 'Money',
+    body: "Kenyan money comes in coins and notes, such as KSh 5, KSh 10, KSh 20, KSh 50, KSh 100, and more. Adding money together works just like adding whole numbers.\n\nWhen you buy something, the change you receive is the difference between what you paid and the price of the item. For example, if you pay KSh 200 for something that costs KSh 150, your change is KSh 200 − KSh 150 = KSh 50.\n\nSaving money means putting some aside regularly. If you save KSh 50 every week, after 4 weeks you will have saved KSh 50 × 4 = KSh 200.\n\nIt's useful to check that different combinations of coins and notes add up to the same amount — for example, five KSh 20 coins equal one KSh 100 note.",
+  },
+  {
+    id: 'math-4-note-shapesangles',
+    subjectId: 'math',
+    grade: 4,
+    topic: 'Shapes & Angles',
+    title: 'Shapes & Angles',
+    body: 'Shapes are all around us. A triangle has 3 sides, a square has 4 equal sides, a rectangle has 4 sides with 4 right angles, and a pentagon has 5 sides.\n\nAn angle is formed where two lines meet. A right angle looks like the corner of a square page. An angle smaller than a right angle is called an acute angle, and an angle bigger than a right angle (but smaller than a straight line) is called an obtuse angle.\n\nDirection and position use words like North, South, East, and West. If you are facing North and turn to face East, you have made a quarter-turn to the right (clockwise).\n\nLearning shapes and angles helps us describe and understand the world around us, from buildings to maps.',
+  },
+  {
+    id: 'math-4-note-patterns',
+    subjectId: 'math',
+    grade: 4,
+    topic: 'Patterns',
+    title: 'Patterns',
+    body: 'A pattern is a sequence that follows a rule. Number patterns can go up (like 2, 4, 6, 8, adding 2 each time) or down (like 40, 35, 30, 25, subtracting 5 each time).\n\nTo find a missing number in a pattern, first figure out the rule — what is being added or subtracted each time — then apply that rule to find the missing piece.\n\nPatterns aren\'t only numbers. Shapes and symbols can repeat in a pattern too, like ●○●○●○, where the missing next symbol would be ○ because the pattern alternates.\n\nOdd numbers (1, 3, 5, 7...) and even numbers (2, 4, 6, 8...) are also patterns — noticing them helps us predict what comes next in a sequence.',
+  },
+  {
+    id: 'math-4-note-datahandling',
+    subjectId: 'math',
+    grade: 4,
+    topic: 'Data Handling',
+    title: 'Data Handling',
+    body: 'Data handling is about collecting, organising, and reading information. A tally chart uses marks (like ||||) to count how many times something happens.\n\nA pictograph uses pictures to represent data, where each picture stands for a certain number of items. For example, if each 🍊 represents 5 oranges, then three 🍊 pictures mean 15 oranges sold.\n\nA bar graph uses bars of different heights to show amounts — taller bars mean bigger numbers. Comparing bars lets us quickly see which group has more or less than another.\n\nReading data carefully helps us answer questions, like which item is most popular, or how much more one group has compared to another.',
+  },
+];
 
 // Grade 4 Mathematics, covering the KICD strands: Numbers, Measurement,
 // Geometry (Data Handling and Algebra are left for later — see memory).

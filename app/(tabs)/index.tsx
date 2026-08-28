@@ -45,7 +45,7 @@ export default function HomeScreen() {
           {subjects.map((s) => (
             <Pressable
               key={s.id}
-              onPress={() => router.push(`/session?subject=${s.id}`)}
+              onPress={() => router.push(`/topics?subject=${s.id}`)}
               style={[styles.cell, { backgroundColor: colors.surface, borderColor: colors.line }]}>
               {s.dueCount > 0 && (
                 <View style={[styles.badge, { backgroundColor: colors.gold }]}>

@@ -46,6 +46,8 @@ function RootLayoutNav() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="onboarding" />
+        <Stack.Screen name="topics" />
+        <Stack.Screen name="note" />
         <Stack.Screen
           name="session"
           options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
