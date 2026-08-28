@@ -7,11 +7,24 @@ import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import * as db from '@/lib/db';
 import { SUBJECTS } from '@/lib/seed';
+import { shuffle } from '@/lib/shuffle';
 import { useAppStore } from '@/lib/store';
 
 type Phase = 'question' | 'feedback' | 'summary';
 
 const SUBJECT_BY_ID = new Map(SUBJECTS.map((s) => [s.id, s.name]));
+
+// Options are shuffled at session time so the correct answer isn't always in
+// the same position (every card in lib/seed.ts was authored with the
+// correct answer as options[0]).
+function shuffleCardOptions(card: db.Card): db.Card {
+  const order = shuffle(card.options.map((_, i) => i));
+  return {
+    ...card,
+    options: order.map((i) => card.options[i]),
+    correctIndex: order.indexOf(card.correctIndex),
+  };
+}
 
 export default function SessionScreen() {
   const router = useRouter();
@@ -23,12 +36,18 @@ export default function SessionScreen() {
 
   // Snapshot the cards once, at mount, so the list doesn't shift under the
   // student mid-session. Three ways in: a specific topic (on-demand practice
-  // from the topic list, ignores due dates), a specific subject (Home tile,
-  // due-date-scoped), or neither (mixed due review across every subject).
+  // from the topic list, ignores due dates and is shuffled since it's the
+  // same fixed pool every time), a specific subject (Home tile, due-date-
+  // scoped — order left as due_at ASC, most-overdue-first), or neither
+  // (mixed due review across every subject). Answer options are always
+  // shuffled, regardless of mode.
   const [cards] = useState(() => {
     if (!grade) return [];
-    if (topic && subject) return db.getTopicCards(Number(grade), subject, topic);
-    return db.getDueCards(Number(grade), 8, subject);
+    const raw =
+      topic && subject
+        ? shuffle(db.getTopicCards(Number(grade), subject, topic))
+        : db.getDueCards(Number(grade), 8, subject);
+    return raw.map(shuffleCardOptions);
   });
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>('question');

@@ -7,7 +7,7 @@
 // seed_version is behind — so content edits actually reach devices that
 // already seeded an earlier version, without wiping grade/streak/stars.
 
-export const SEED_VERSION = 9;
+export const SEED_VERSION = 10;
 
 export type Subject = {
   id: string;
@@ -112,6 +112,258 @@ export const SEED_NOTES: SeedNote[] = [
     topic: 'Data Handling',
     title: 'Data Handling',
     body: 'Data handling is about collecting, organising, and reading information. A tally chart uses marks (like ||||) to count how many times something happens.\n\nA pictograph uses pictures to represent data, where each picture stands for a certain number of items. For example, if each 🍊 represents 5 oranges, then three 🍊 pictures mean 15 oranges sold.\n\nA bar graph uses bars of different heights to show amounts — taller bars mean bigger numbers. Comparing bars lets us quickly see which group has more or less than another.\n\nReading data carefully helps us answer questions, like which item is most popular, or how much more one group has compared to another.',
+  },
+
+  // --- English ---
+  {
+    id: 'english-4-note-nounspronouns',
+    subjectId: 'english',
+    grade: 4,
+    topic: 'Nouns & Pronouns',
+    title: 'Nouns & Pronouns',
+    body: "A noun is a word that names a person, place, animal, or thing — like 'teacher', 'Nairobi', 'dog', or 'book'. A proper noun names something specific, like a person's name ('Amina') or a place ('Kenya'), and always starts with a capital letter.\n\nA pronoun is a word that takes the place of a noun so we don't have to repeat it. Instead of saying 'Amina went to the market. Amina bought vegetables', we can say 'Amina went to the market. She bought vegetables.' Common pronouns include he, she, it, they, and we.\n\nSome nouns have irregular plurals that don't just add 's' — like 'child' becoming 'children', not 'childs'.\n\nA collective noun names a whole group as one word, like 'flock' (a group of sheep or birds) or 'team' (a group of players).",
+  },
+  {
+    id: 'english-4-note-verbstenses',
+    subjectId: 'english',
+    grade: 4,
+    topic: 'Verbs & Tenses',
+    title: 'Verbs & Tenses',
+    body: "A verb is a word that shows an action or state, like 'run', 'eat', or 'is'. The tense of a verb tells us when something happens.\n\nPresent tense describes something happening now or regularly: 'She plays football.' Past tense describes something that already happened: 'She played football yesterday.' Future tense describes something that hasn't happened yet: 'She will play football tomorrow.'\n\nSome verbs change in unusual ways in the past tense — for example, 'go' becomes 'went', not 'goed'.\n\nWe also use the present continuous tense ('is doing') to describe something happening right at this moment: 'He is doing his homework now.'\n\nChoosing the correct tense helps make sentences clear about when an action takes place.",
+  },
+  {
+    id: 'english-4-note-adjectivespunctuation',
+    subjectId: 'english',
+    grade: 4,
+    topic: 'Adjectives & Punctuation',
+    title: 'Adjectives & Punctuation',
+    body: "An adjective is a word that describes a noun, telling us more about it — like 'tall', 'red', or 'happy'. In the sentence 'The tall boy ran fast', 'tall' describes the boy.\n\nComparative adjectives compare two things, usually by adding '-er': 'big' becomes 'bigger'.\n\nPunctuation marks help make writing clear. A full stop (.) ends a statement. A question mark (?) ends a question. An exclamation mark (!) shows strong feeling or excitement.\n\nCapital letters are used at the start of every sentence, and for proper nouns like names of people and places — for example, 'Amani went to Nairobi.'\n\nWe also use 'a' before words starting with a consonant sound and 'an' before words starting with a vowel sound, like 'an apple'.",
+  },
+  {
+    id: 'english-4-note-vocabulary',
+    subjectId: 'english',
+    grade: 4,
+    topic: 'Synonyms & Antonyms',
+    title: 'Synonyms & Antonyms',
+    body: "A synonym is a word that means almost the same as another word. For example, 'happy' and 'glad' are synonyms, and so are 'fast' and 'quick'.\n\nAn antonym is a word that means the opposite of another word. For example, 'big' and 'small' are antonyms, and so are 'clean' and 'dirty'.\n\nLearning synonyms helps make our writing more interesting, since we don't have to use the same word over and over. Learning antonyms helps us understand and describe differences clearly.\n\nA good way to build vocabulary is to notice new words when reading and think about what other words mean something similar or opposite.",
+  },
+  {
+    id: 'english-4-note-reading',
+    subjectId: 'english',
+    grade: 4,
+    topic: 'Reading Comprehension',
+    title: 'Reading Comprehension',
+    body: "Reading comprehension means understanding what a passage is really saying, not just reading the words. A good approach is to read the whole passage carefully first, then look back at it to answer questions.\n\nSome questions ask about facts stated directly in the passage — the answer is written right there, so look for matching words or ideas. Other questions ask what is NOT mentioned in the passage — for these, check each option against what the passage actually says, rather than guessing from general knowledge.\n\nIt helps to notice key details like names, numbers, and actions as you read, since questions often focus on these.\n\nReading a passage more than once, if needed, is a good strategy — the second read often reveals details missed the first time.",
+  },
+
+  // --- Kiswahili ---
+  {
+    id: 'kiswahili-4-note-ngeli',
+    subjectId: 'kiswahili',
+    grade: 4,
+    topic: 'Ngeli za Nomino',
+    title: 'Ngeli za Nomino',
+    body: 'Ngeli ni jinsi nomino zinavyogawanywa kulingana na jinsi zinavyobadilika kutoka umoja hadi wingi. Kila ngeli ina kiambishi chake maalum.\n\nNgeli ya M-WA hutumika kwa watu, mfano: mtoto (umoja) huwa watoto (wingi), na mtu huwa watu.\n\nNgeli ya M-MI hutumika kwa miti na mimea, mfano: mti huwa miti.\n\nNgeli ya KI-VI hutumika kwa vitu vingi, mfano: kitabu huwa vitabu, na kiti huwa viti.\n\nNgeli ya N-N haibadiliki kati ya umoja na wingi — nomino kama nyumba hubaki nyumba katika umoja na wingi.\n\nKujua ngeli husaidia kupatanisha vivumishi na vitenzi kwa usahihi katika sentensi.',
+  },
+  {
+    id: 'kiswahili-4-note-vitenzi',
+    subjectId: 'kiswahili',
+    grade: 4,
+    topic: 'Vitenzi na Nyakati',
+    title: 'Vitenzi na Nyakati',
+    body: "Kitenzi ni neno linaloonyesha kitendo, kama 'kusoma' au 'kucheza'. Viambishi vya nyakati vinaonyesha wakati kitendo kilipofanyika.\n\nKiambishi -na- kinaonyesha wakati uliopo, kitendo kinachoendelea sasa: 'Anasoma' (yeye anasoma sasa).\n\nKiambishi -li- kinaonyesha wakati uliopita, kitendo kilichotokea zamani: 'Alisoma' (yeye alisoma zamani).\n\nKiambishi -ta- kinaonyesha wakati ujao, kitendo ambacho bado hakijatokea: 'Atasoma' (yeye atasoma baadaye).\n\nKubadilisha kitenzi kutoka wakati mmoja hadi mwingine ni rahisi — badilisha tu kiambishi cha wakati, kikibaki mzizi wa kitenzi sawa. Kwa mfano, 'Ninakula' (uliopo) huwa 'Nilikula' (uliopita) kwa kubadilisha -na- kuwa -li-.",
+  },
+  {
+    id: 'kiswahili-4-note-vivumishi',
+    subjectId: 'kiswahili',
+    grade: 4,
+    topic: 'Vivumishi na Uakifishaji',
+    title: 'Vivumishi na Uakifishaji',
+    body: "Kivumishi ni neno linaloeleza zaidi kuhusu nomino, kama 'mrefu' au 'mzuri'. Katika sentensi 'Mtoto mrefu anaruka', neno 'mrefu' linaeleza jinsi mtoto alivyo.\n\nVivumishi hupatana na ngeli ya nomino. Kwa mfano, 'mtoto' (umoja, ngeli ya M) huchukua 'mzuri', lakini 'watoto' (wingi, ngeli ya WA) huchukua 'wazuri'.\n\nAlama za uakifishaji husaidia kuandika sentensi vizuri. Alama ya kuuliza (?) hutumika mwishoni mwa swali. Alama ya mshangao (!) huonyesha hisia kali. Kituo (.) hutumika mwishoni mwa sentensi ya kawaida.\n\nMajina ya watu na mahali, kama 'Amina' au 'Nairobi', huanza na herufi kubwa.",
+  },
+  {
+    id: 'kiswahili-4-note-msamiati',
+    subjectId: 'kiswahili',
+    grade: 4,
+    topic: 'Visawe na Vinyume',
+    title: 'Visawe na Vinyume',
+    body: "Kisawe ni neno lenye maana inayokaribiana na neno lingine. Kwa mfano, 'furaha' na 'raha' ni visawe, na 'haraka' na 'mbio' pia ni visawe.\n\nKinyume ni neno lenye maana tofauti kabisa na neno lingine. Kwa mfano, 'kubwa' na 'kidogo' ni vinyume, na 'safi' na 'chafu' pia ni vinyume.\n\nKujifunza visawe husaidia kuandika kwa njia mbalimbali bila kurudia neno lile lile mara kwa mara. Kujifunza vinyume husaidia kueleza tofauti kwa uwazi.\n\nNjia nzuri ya kujifunza msamiati mpya ni kuzingatia maneno tunapoyasoma na kufikiria maneno mengine yenye maana inayokaribiana au tofauti.",
+  },
+  {
+    id: 'kiswahili-4-note-ufahamu',
+    subjectId: 'kiswahili',
+    grade: 4,
+    topic: 'Ufahamu',
+    title: 'Ufahamu',
+    body: 'Ufahamu ni uwezo wa kuelewa kile kifungu kinachosema, si kusoma maneno tu. Njia nzuri ni kusoma kifungu chote kwa makini kwanza, kisha kurudi kukiangalia unapojibu maswali.\n\nMaswali mengine huuliza kuhusu mambo yaliyoandikwa moja kwa moja katika kifungu — jibu liko pale pale, hivyo tafuta maneno au mawazo yanayolingana. Maswali mengine huuliza kile ambacho HAKIKUTAJWA katika kifungu — kwa haya, angalia kila jibu dhidi ya kile kifungu kinachosema kweli, badala ya kukisia.\n\nNi muhimu kuzingatia maelezo muhimu kama majina, nambari, na vitendo unaposoma, kwa sababu maswali mara nyingi huhusu haya.\n\nKusoma kifungu zaidi ya mara moja, ikiwa inahitajika, ni njia nzuri — usomaji wa pili mara nyingi hufunua maelezo yaliyokosekana mara ya kwanza.',
+  },
+
+  // --- Integrated Science ---
+  {
+    id: 'science-4-note-livingthings',
+    subjectId: 'science',
+    grade: 4,
+    topic: 'Classification & Life Processes',
+    title: 'Classification & Life Processes',
+    body: 'Living things share certain characteristics: they grow, feed, breathe, move, and reproduce. Non-living things, like stones or chairs, do none of these.\n\nAnimals can be classified by what they eat. Herbivores eat only plants, like cows and rabbits. Carnivores eat only other animals. Omnivores eat both plants and animals, like humans and pigs.\n\nPlants make their own food through a process called photosynthesis, using sunlight, water, and air. Their roots absorb water and nutrients from the soil, while their leaves capture sunlight.\n\nUnderstanding how living things are grouped and how they get their energy helps us understand the natural world and how different organisms depend on each other.',
+  },
+  {
+    id: 'science-4-note-humanbody',
+    subjectId: 'science',
+    grade: 4,
+    topic: 'Human Body & Health',
+    title: 'Human Body & Health',
+    body: 'Our bodies have important organs that keep us alive. The heart pumps blood around the body, carrying oxygen and nutrients to every part. The lungs take in oxygen when we breathe and release carbon dioxide.\n\nGood health habits help our bodies work well. Washing hands before eating and after playing removes germs that can make us sick. Covering your mouth when coughing stops germs from spreading to others.\n\nA balanced diet gives our bodies what they need. Carbohydrates, found in foods like rice and ugali, give us energy. Other food groups like proteins and vitamins help our bodies grow and stay healthy.\n\nBuilding good habits now — like washing hands and eating well — helps keep us healthy throughout life.',
+  },
+  {
+    id: 'science-4-note-materials',
+    subjectId: 'science',
+    grade: 4,
+    topic: 'Materials & Mixtures',
+    title: 'Materials & Mixtures',
+    body: 'Water can exist in three states: solid (ice), liquid (water), and gas (steam or vapour). Heating water to boiling point turns it into steam — this is called evaporation. Cooling water turns it into ice — this is called freezing.\n\nA mixture is made when two or more substances are combined without chemically joining, like sand and water. Mixtures can often be separated again — for example, filtering can separate sand from water, letting the water pass through while trapping the sand.\n\nSome materials are magnetic, meaning they are attracted to a magnet. Iron is a magnetic metal, so objects like iron nails are attracted to magnets, while materials like plastic, wood, and paper are not.\n\nUnderstanding materials and how they change helps us use them well in everyday life.',
+  },
+  {
+    id: 'science-4-note-forceenergy',
+    subjectId: 'science',
+    grade: 4,
+    topic: 'Force & Energy',
+    title: 'Force & Energy',
+    body: "A force is any push or pull that can move or change an object. Gravity is a force that pulls objects down towards the earth — it's why things fall when dropped.\n\nEnergy comes in different forms. The sun gives off light and heat energy. Electrical energy powers things like light bulbs. Sunlight is a renewable energy source, meaning it doesn't run out, unlike coal or petrol which are non-renewable.\n\nSimple machines make work easier. A pulley uses a wheel and rope to help lift heavy loads with less effort.\n\nUnderstanding forces and energy helps us understand how things move and work, from a ball rolling down a hill to a light bulb glowing.",
+  },
+  {
+    id: 'science-4-note-environment',
+    subjectId: 'science',
+    grade: 4,
+    topic: 'Environment & Conservation',
+    title: 'Environment & Conservation',
+    body: 'Our environment gives us everything we need to live — air, water, food, and shelter. Trees are especially important: they provide oxygen, and their roots hold soil in place, preventing erosion.\n\nPollution happens when harmful substances are added to the air, water, or land, and it can harm both people and wildlife. We can help protect the environment by conserving water (like turning off taps when not in use), reducing waste (by reusing items instead of throwing them away), and avoiding activities that destroy habitats, like careless deforestation.\n\nWildlife depends on healthy habitats to survive — cutting down a forest puts the animals living there at risk.\n\nEvery small action, like planting a tree or not littering, helps protect our environment for the future.',
+  },
+
+  // --- Social Studies ---
+  {
+    id: 'social-4-note-environment',
+    subjectId: 'social',
+    grade: 4,
+    topic: 'Our Environment',
+    title: 'Our Environment',
+    body: 'Our environment includes both natural features, like mountains, rivers, and forests, and built (man-made) features, like roads, buildings, and bridges.\n\nRivers and lakes are important because they provide fresh water for communities to drink, farm, and use every day.\n\nMaps help us understand where places are located, and a compass on a map shows directions — North, South, East, and West.\n\nSome human activities can damage the natural environment, like cutting down forests carelessly, which can lead to soil erosion and loss of habitats for animals.\n\nLearning about our environment helps us understand our surroundings and make better choices to protect them.',
+  },
+  {
+    id: 'social-4-note-population',
+    subjectId: 'social',
+    grade: 4,
+    topic: 'People & Population',
+    title: 'People & Population',
+    body: 'A settlement is a place where people live together, like a village or a town. Rural areas, like farming villages, usually have fewer people than urban areas, like busy cities.\n\nPeople sometimes migrate — move from one place to another — often to look for better opportunities like jobs, schools, or living conditions.\n\nA census is an official count of how many people live in a particular area. This information helps governments plan for things like schools, hospitals, and roads.\n\nEvery person has basic needs that must be met to survive: food, water, and shelter. Understanding population and settlement patterns helps us understand how communities grow and change.',
+  },
+  {
+    id: 'social-4-note-culture',
+    subjectId: 'social',
+    grade: 4,
+    topic: 'Culture & Heritage',
+    title: 'Culture & Heritage',
+    body: "Culture is the way of life of a group of people — it includes their customs, traditions, language, food, and more. Kenya is home to many different communities, each with its own unique culture, including traditional songs, dances, and ceremonies.\n\nCultural heritage refers to objects, traditions, and practices passed down from the past that show a community's history, like traditional artifacts or a traditional wedding ceremony.\n\nRespecting different cultures is important because it helps people from different backgrounds live together peacefully, learning from and appreciating each other's traditions.\n\nKenya's diversity — with over 40 different ethnic communities — is something to celebrate and understand, as each community contributes its own traditions to the nation as a whole.",
+  },
+  {
+    id: 'social-4-note-resources',
+    subjectId: 'social',
+    grade: 4,
+    topic: 'Resources & Enterprise',
+    title: 'Resources & Enterprise',
+    body: 'A natural resource is something from nature that people use, like water, trees, or minerals. A human-made resource, like a factory, is something built by people using natural resources and labour.\n\nEnterprise means starting and running a business activity to earn money while providing goods or services to others. People start small businesses for many reasons, including earning income and meeting the needs of their community.\n\nNatural resources should be used wisely — this means not wasting them, so they remain available for future generations. For example, planting new trees after cutting some down helps ensure forests are available in the future.\n\nUnderstanding resources and enterprise helps us appreciate how communities meet their needs and build their economies.',
+  },
+  {
+    id: 'social-4-note-citizenship',
+    subjectId: 'social',
+    grade: 4,
+    topic: 'Citizenship & Government',
+    title: 'Citizenship & Government',
+    body: "A citizen is a member of a country who has both rights and duties. In Kenya, citizens have rights like the right to education, and duties like obeying the country's laws.\n\nKenya's capital city is Nairobi, and the President is the head of the national government.\n\nLaws exist to keep order in society and protect the rights of everyone. Good citizens obey these laws and respect the rights of others, which helps communities function smoothly and fairly.\n\nUnderstanding citizenship and government helps us understand our role in society, and how countries organize themselves to serve and protect their people.",
+  },
+
+  // --- Creative Arts ---
+  {
+    id: 'creative-4-note-rhythm',
+    subjectId: 'creative',
+    grade: 4,
+    topic: 'Rhythm & Instruments',
+    title: 'Rhythm & Instruments',
+    body: 'Rhythm is the pattern of beats over time in music. Clapping your hands in a steady pattern while singing is a simple way to keep rhythm.\n\nInstruments can be grouped by how they make sound. Percussion instruments, like drums, are played by hitting or shaking them. Wind instruments, like the recorder, are played by blowing air through them.\n\nThe drum (ngoma) is a percussion instrument traditionally used in many Kenyan communities.\n\nA melody is a short musical pattern of notes that forms the tune of a song — it\'s what you hum when you remember a song, even without the words.\n\nUnderstanding rhythm and instruments helps us appreciate and take part in music-making.',
+  },
+  {
+    id: 'creative-4-note-songs',
+    subjectId: 'creative',
+    grade: 4,
+    topic: 'Songs & Performance',
+    title: 'Songs & Performance',
+    body: "Singing together as a group is called a choir, while singing alone is called a solo. Both are ways of performing music.\n\nBefore performing on stage, it's important to practice and rehearse so the performance goes smoothly.\n\nWhen singing with others, listening to the beat helps everyone stay together and in time — this is important for a good group performance.\n\nThe words of a song are called lyrics.\n\nGood performance etiquette includes respecting the audience and fellow performers — this means staying quiet during others' performances and being supportive of everyone involved.\n\nPerforming, whether alone or in a group, is a wonderful way to express creativity and share music with others.",
+  },
+  {
+    id: 'creative-4-note-colours',
+    subjectId: 'creative',
+    grade: 4,
+    topic: 'Colours & Materials',
+    title: 'Colours & Materials',
+    body: 'Red, blue, and yellow are the primary colours — they cannot be made by mixing other colours, but all other colours can be made by mixing these three.\n\nMixing two primary colours creates a new colour: blue and yellow make green, red and blue make purple, and red and yellow make orange.\n\nCraft work can use many different materials, including recycled items like paper and bottle tops — these are low-cost and environmentally friendly materials for making art.\n\nA paintbrush is the standard tool used to apply paint, though other tools like sponges can also create interesting effects.\n\nUnderstanding colours and materials helps artists create and mix the exact colours and textures they want in their work.',
+  },
+  {
+    id: 'creative-4-note-drawing',
+    subjectId: 'creative',
+    grade: 4,
+    topic: 'Drawing & Design',
+    title: 'Drawing & Design',
+    body: "Basic shapes, like circles, squares, and triangles, are the building blocks of many drawings. A pattern in art is a design that repeats.\n\nA ruler is a useful tool for drawing straight, even lines, while freehand drawing works well for curves and organic shapes.\n\nIn a drawing, the background is the part behind the main subject, while the foreground is what's closest to the viewer.\n\nSome shapes are 3-dimensional, meaning they have length, width, and height, like a cube — unlike flat (2-dimensional) shapes like circles and squares.\n\nArtists often sketch first before making a final drawing, which lets them plan out their ideas and try different options before committing to one.",
+  },
+  {
+    id: 'creative-4-note-appreciation',
+    subjectId: 'creative',
+    grade: 4,
+    topic: 'Appreciation',
+    title: 'Appreciation',
+    body: "To critique an artwork means to give thoughtful feedback about it — not to simply say if you like it or not, but to think about why.\n\nWhen looking at art, we can comment on things like the colours used, the shapes and patterns, and how the artwork makes us feel.\n\nAppreciating other people's artwork helps us learn new ideas and builds respect for creativity, even when a style is different from our own.\n\nWhen giving feedback on someone's art, it's best to be kind and helpful, since encouraging feedback helps people want to keep creating.\n\nTraditional Kenyan art and craft often reflect the culture and history of the community that made it, so appreciating it can teach us about our heritage.",
+  },
+
+  // --- Religious Education (CRE) ---
+  {
+    id: 're-4-note-bible',
+    subjectId: 're',
+    grade: 4,
+    topic: 'The Bible',
+    title: 'The Bible',
+    body: 'The Bible is the Christian holy book, divided into two main parts: the Old Testament and the New Testament.\n\nThe Old Testament contains stories about creation, and about the Israelites and the Prophets. The New Testament tells the story of Jesus\'s birth, life, and teachings.\n\nChristians believe the Bible is important because it is how God speaks to His people, so it should be treated with care and respect.\n\nThe very first book of the Bible is called Genesis, and it tells the story of how God created the world.\n\nReading and learning from the Bible helps Christians understand their faith and how to live according to Christian values.',
+  },
+  {
+    id: 're-4-note-creation',
+    subjectId: 're',
+    grade: 4,
+    topic: 'Creation',
+    title: 'Creation',
+    body: 'According to the Bible, God created the world. The book of Genesis tells this story, including the creation of the first man and woman, Adam and Eve.\n\nThe creation story teaches that each person is uniquely and specially made — everyone is different and valuable in their own way.\n\nChristians believe we should care for the things God created, like animals, plants, and the environment, treating them with respect rather than wasting or destroying them.\n\nBeing thankful for creation means taking care of the world around us — for example, by looking after the environment and not wasting natural resources.\n\nThe creation story helps Christians understand their relationship with God and with the world they live in.',
+  },
+  {
+    id: 're-4-note-values',
+    subjectId: 're',
+    grade: 4,
+    topic: 'Christian Values',
+    title: 'Christian Values',
+    body: 'Christian values guide how we treat ourselves and others. Obedience means listening and doing what is asked by parents and teachers — this helps everyone learn and stay safe.\n\nHonesty is important because it helps build trust between people. Love means being kind and caring towards others, and helping someone in need reflects this value.\n\nForgiveness — letting go of anger when someone makes a mistake — helps people live peacefully together.\n\nPracticing good values, like obedience at school, helps create a safe and positive environment where everyone can learn and thrive.\n\nLiving out these values in daily life is an important part of the Christian faith.',
+  },
+  {
+    id: 're-4-note-prayer',
+    subjectId: 're',
+    grade: 4,
+    topic: 'Prayer & Worship',
+    title: 'Prayer & Worship',
+    body: 'Prayer is how Christians communicate with God — it can include giving thanks, asking for help, or simply talking to God about anything.\n\nChristians can pray at any time, not just on special occasions — including in the morning, before meals, or whenever they choose.\n\nChristians usually gather at church to worship together, which often includes singing hymns — songs of praise sung during worship.\n\nPrayer and worship help Christians feel connected to God and to their faith community.\n\nBuilding a habit of prayer, even in small moments throughout the day, is an important part of Christian life.',
+  },
+  {
+    id: 're-4-note-family',
+    subjectId: 're',
+    grade: 4,
+    topic: 'Family & Community',
+    title: 'Family & Community',
+    body: "The family is considered the smallest and most basic unit of a community. It's within families that children first learn values like respect, responsibility, and love.\n\nRespecting parents and elders is important because they guide and care for us. Children can contribute at home by doing simple chores and being responsible.\n\nA strong community is built on people supporting and caring for one another, including being kind and helpful towards neighbours.\n\nEvery family member's role — whether it's earning income, caring for children, or doing housework — contributes to the wellbeing of the whole family.\n\nUnderstanding the importance of family and community helps us appreciate our relationships and our responsibilities towards others.",
   },
 ];
 
