@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "study_app",
-    "slug": "study_app",
+    "name": "Kua",
+    "slug": "kua",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "studyapp",
+    "scheme": "kua",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true
@@ -31,9 +31,10 @@
         {
           "image": "./assets/images/splash-icon.png",
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#F4F6EF"
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true
