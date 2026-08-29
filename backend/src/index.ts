@@ -146,24 +146,34 @@ async function runModel(
   return (result as { response?: unknown })?.response ?? result;
 }
 
-async function generateNote(env: Env, grade: number, subject: string, topic: string) {
+// When a student supplies their own material (Add Material feature), the
+// generation should be grounded in that text rather than the model's
+// general knowledge of the topic — this is what lets Kua turn a student's
+// own notes into a note/questions, not just generate generic curriculum
+// content under a custom topic name.
+function materialClause(material?: string): string {
+  if (!material) return '';
+  return `The student has provided their own study material below — base your answer primarily on this material, in your own words, rather than inventing new content beyond it:\n"""\n${material}\n"""\n\n`;
+}
+
+async function generateNote(env: Env, grade: number, subject: string, topic: string, material?: string) {
   if (env.MOCK_MODE === 'true') return MOCK.note;
   const raw = await runModel(
     env.AI,
     systemPrompt(grade, subject, topic),
-    `Write a study note explaining "${topic}" for a Grade ${grade} ${subject} student. It must be at least 4 full sentences and 150-250 words total — a single short sentence is NOT acceptable, this needs to actually teach the concept with a worked example. Match the plain, encouraging tone of a good teacher. If the topic name has more than one part (e.g. joined by "&" or "and"), cover every part with its own sentence, not just the first.`,
+    `${materialClause(material)}Write a study note explaining "${topic}" for a Grade ${grade} ${subject} student. It must be at least 4 full sentences and 150-250 words total — a single short sentence is NOT acceptable, this needs to actually teach the concept with a worked example. Match the plain, encouraging tone of a good teacher. If the topic name has more than one part (e.g. joined by "&" or "and"), cover every part with its own sentence, not just the first.`,
     NOTE_JSON_SCHEMA,
     700
   );
   return parseAndValidate(NoteSchema, raw);
 }
 
-async function generateQuestions(env: Env, grade: number, subject: string, topic: string, count: number) {
+async function generateQuestions(env: Env, grade: number, subject: string, topic: string, count: number, material?: string) {
   if (env.MOCK_MODE === 'true') return MOCK.questions;
   const raw = await runModel(
     env.AI,
     systemPrompt(grade, subject, topic),
-    `Write ${count} multiple-choice practice questions on "${topic}" for a Grade ${grade} ${subject} student. Each question needs exactly 4 answer options and a one-sentence explanation of why the correct answer is right. Options must be short, bare answers (a number, a word, or a short phrase) — NOT full restated sentences like "The pattern is...". correctIndex must be 0, 1, 2, or 3, matching the position of the right answer in the options array. Vary which option index holds the correct answer across the questions — do not always put it first.`,
+    `${materialClause(material)}Write ${count} multiple-choice practice questions on "${topic}" for a Grade ${grade} ${subject} student. Each question needs exactly 4 answer options and a one-sentence explanation of why the correct answer is right. Options must be short, bare answers (a number, a word, or a short phrase) — NOT full restated sentences like "The pattern is...". correctIndex must be 0, 1, 2, or 3, matching the position of the right answer in the options array. Vary which option index holds the correct answer across the questions — do not always put it first.`,
     QUESTION_SET_JSON_SCHEMA,
     // Roomy per-question budget (~150 tokens each) plus headroom for JSON
     // structure — the earlier default of 256 total cut a 4-question
@@ -227,9 +237,9 @@ export default {
       let result: unknown;
 
       if (url.pathname === '/generate-note') {
-        result = await generateNote(env, grade, subject, topic);
+        result = await generateNote(env, grade, subject, topic, body.material);
       } else if (url.pathname === '/generate-questions') {
-        result = await generateQuestions(env, grade, subject, topic, body.count ?? 6);
+        result = await generateQuestions(env, grade, subject, topic, body.count ?? 6, body.material);
       } else if (url.pathname === '/explain-more') {
         if (!body.previousText) {
           return jsonResponse({ error: 'previousText is required' }, 400);

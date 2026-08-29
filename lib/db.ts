@@ -74,7 +74,8 @@ export function initDb() {
       correct_index INTEGER NOT NULL,
       explanation TEXT NOT NULL,
       due_at TEXT NOT NULL,
-      interval_days INTEGER NOT NULL DEFAULT 0
+      interval_days INTEGER NOT NULL DEFAULT 0,
+      source TEXT NOT NULL DEFAULT 'seed'
     );
     CREATE TABLE IF NOT EXISTS reviews (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -88,15 +89,24 @@ export function initDb() {
       grade INTEGER NOT NULL,
       topic TEXT NOT NULL,
       title TEXT NOT NULL,
-      body TEXT NOT NULL
+      body TEXT NOT NULL,
+      source TEXT NOT NULL DEFAULT 'seed'
     );
   `);
 
-  // Devices that seeded before the `grade` column existed need it added —
-  // CREATE TABLE IF NOT EXISTS is a no-op on an already-existing table.
+  // Devices that seeded before the `grade`/`source` columns existed need
+  // them added — CREATE TABLE IF NOT EXISTS is a no-op on an
+  // already-existing table.
   const cardColumns = db.getAllSync<{ name: string }>('PRAGMA table_info(cards)');
   if (!cardColumns.some((c) => c.name === 'grade')) {
     db.execSync('ALTER TABLE cards ADD COLUMN grade INTEGER NOT NULL DEFAULT 4');
+  }
+  if (!cardColumns.some((c) => c.name === 'source')) {
+    db.execSync("ALTER TABLE cards ADD COLUMN source TEXT NOT NULL DEFAULT 'seed'");
+  }
+  const noteColumns = db.getAllSync<{ name: string }>('PRAGMA table_info(notes)');
+  if (!noteColumns.some((c) => c.name === 'source')) {
+    db.execSync("ALTER TABLE notes ADD COLUMN source TEXT NOT NULL DEFAULT 'seed'");
   }
 
   syncSeedContent();
@@ -113,8 +123,10 @@ function syncSeedContent() {
   }
 
   const installedVersion = Number(getMeta('seed_version') ?? '0');
-  const currentCardCount = db.getFirstSync<{ n: number }>('SELECT COUNT(*) as n FROM cards')?.n ?? 0;
-  const currentNoteCount = db.getFirstSync<{ n: number }>('SELECT COUNT(*) as n FROM notes')?.n ?? 0;
+  const currentCardCount =
+    db.getFirstSync<{ n: number }>("SELECT COUNT(*) as n FROM cards WHERE source = 'seed'")?.n ?? 0;
+  const currentNoteCount =
+    db.getFirstSync<{ n: number }>("SELECT COUNT(*) as n FROM notes WHERE source = 'seed'")?.n ?? 0;
   // Reseed if the version is behind, OR if the row counts don't match what
   // SEED_CARDS/SEED_NOTES actually hold right now. The count check guards
   // against a torn reseed (seen in practice from a Fast Refresh race
@@ -129,29 +141,86 @@ function syncSeedContent() {
     return;
   }
 
-  // Seed content changed since this device last synced. Cards/notes are
-  // fully replaced (old review history for cards goes too); grade/streak/
-  // stars in `meta` are untouched since they aren't derived from these rows.
-  db.execSync('DELETE FROM reviews; DELETE FROM cards; DELETE FROM notes;');
+  // Seed content changed since this device last synced. Only seed-sourced
+  // cards/notes (and reviews tied to them) are wiped and replaced —
+  // student-added material (source = 'generated', from Add Material or a
+  // saved AI note) survives reseeds untouched. grade/streak/stars in `meta`
+  // are also untouched since they aren't derived from these rows.
+  db.execSync(`
+    DELETE FROM reviews WHERE card_id IN (SELECT id FROM cards WHERE source = 'seed');
+    DELETE FROM cards WHERE source = 'seed';
+    DELETE FROM notes WHERE source = 'seed';
+  `);
   const now = new Date().toISOString();
   for (const c of SEED_CARDS) {
     db.runSync(
-      `INSERT INTO cards (id, subject_id, grade, topic, question, options, correct_index, explanation, due_at, interval_days)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
+      `INSERT INTO cards (id, subject_id, grade, topic, question, options, correct_index, explanation, due_at, interval_days, source)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'seed')`,
       [c.id, c.subjectId, c.grade, c.topic, c.question, JSON.stringify(c.options), c.correctIndex, c.explanation, now]
     );
   }
   for (const n of SEED_NOTES) {
-    db.runSync('INSERT INTO notes (id, subject_id, grade, topic, title, body) VALUES (?, ?, ?, ?, ?, ?)', [
-      n.id,
-      n.subjectId,
-      n.grade,
-      n.topic,
-      n.title,
-      n.body,
-    ]);
+    db.runSync(
+      "INSERT INTO notes (id, subject_id, grade, topic, title, body, source) VALUES (?, ?, ?, ?, ?, ?, 'seed')",
+      [n.id, n.subjectId, n.grade, n.topic, n.title, n.body]
+    );
   }
   setMeta('seed_version', String(SEED_VERSION));
+}
+
+function slugifyTopic(topic: string): string {
+  return topic
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+// Persists an AI-generated note so it survives reloads/reseeds instead of
+// living only in component state — used both when a student generates a
+// note for a topic that had none, and when Add Material creates a note for
+// a brand-new custom topic. Upserts on (grade, subjectId, topic) so
+// regenerating the same topic replaces rather than duplicates.
+export function saveGeneratedNote(grade: number, subjectId: string, topic: string, title: string, body: string) {
+  const id = `${subjectId}-${grade}-${slugifyTopic(topic)}-generated`;
+  db.runSync(
+    `INSERT INTO notes (id, subject_id, grade, topic, title, body, source) VALUES (?, ?, ?, ?, ?, ?, 'generated')
+     ON CONFLICT(id) DO UPDATE SET title = excluded.title, body = excluded.body`,
+    [id, subjectId, grade, topic, title, body]
+  );
+}
+
+export type GeneratedCardInput = {
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+};
+
+// Replaces any previously-generated cards for this exact (grade, subject,
+// topic) with a fresh set, due immediately. Used by Add Material for a new
+// custom topic, so regenerating doesn't pile up duplicate question sets.
+// Never touches seed cards.
+export function saveGeneratedCards(grade: number, subjectId: string, topic: string, cards: GeneratedCardInput[]) {
+  const slug = slugifyTopic(topic);
+  const existing = db.getAllSync<{ id: string }>(
+    "SELECT id FROM cards WHERE grade = ? AND subject_id = ? AND topic = ? AND source = 'generated'",
+    [grade, subjectId, topic]
+  );
+  if (existing.length > 0) {
+    const ids = existing.map((r) => r.id);
+    const placeholders = ids.map(() => '?').join(',');
+    db.runSync(`DELETE FROM reviews WHERE card_id IN (${placeholders})`, ids);
+    db.runSync(`DELETE FROM cards WHERE id IN (${placeholders})`, ids);
+  }
+  const now = new Date().toISOString();
+  cards.forEach((c, i) => {
+    db.runSync(
+      `INSERT INTO cards (id, subject_id, grade, topic, question, options, correct_index, explanation, due_at, interval_days, source)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'generated')`,
+      [`${subjectId}-${grade}-${slug}-generated-${i}`, subjectId, grade, topic, c.question, JSON.stringify(c.options), c.correctIndex, c.explanation, now]
+    );
+  });
 }
 
 function getMeta(key: string): string | null {

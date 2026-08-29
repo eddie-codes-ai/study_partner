@@ -31,6 +31,7 @@ export default function NoteScreen() {
     setAi({ status: 'loading' });
     try {
       const result = await generateNote(gradeNum, subjectName, topic);
+      db.saveGeneratedNote(gradeNum, subject, topic, result.title, result.body);
       setAi({ status: 'done', text: result.body });
     } catch (err) {
       setAi({ status: 'error', message: err instanceof TutorError ? err.message : 'Something went wrong.' });

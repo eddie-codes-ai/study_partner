@@ -46,8 +46,13 @@ export type GeneratedNote = {
   body: string;
 };
 
-export function generateNote(grade: number, subject: string, topic: string): Promise<GeneratedNote> {
-  return callTutor<GeneratedNote>('/generate-note', { grade, subject, topic });
+export function generateNote(
+  grade: number,
+  subject: string,
+  topic: string,
+  material?: string
+): Promise<GeneratedNote> {
+  return callTutor<GeneratedNote>('/generate-note', { grade, subject, topic, material });
 }
 
 export type GeneratedQuestion = {
@@ -61,9 +66,10 @@ export function generateQuestions(
   grade: number,
   subject: string,
   topic: string,
-  count = 6
+  count = 6,
+  material?: string
 ): Promise<{ cards: GeneratedQuestion[] }> {
-  return callTutor<{ cards: GeneratedQuestion[] }>('/generate-questions', { grade, subject, topic, count });
+  return callTutor<{ cards: GeneratedQuestion[] }>('/generate-questions', { grade, subject, topic, count, material });
 }
 
 export function explainMore(
