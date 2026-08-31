@@ -92,6 +92,15 @@ export function initDb() {
       body TEXT NOT NULL,
       source TEXT NOT NULL DEFAULT 'seed'
     );
+    CREATE TABLE IF NOT EXISTS mock_exams (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      grade INTEGER NOT NULL,
+      subject_id TEXT,
+      total INTEGER NOT NULL,
+      correct INTEGER NOT NULL,
+      duration_seconds INTEGER NOT NULL,
+      taken_at TEXT NOT NULL
+    );
   `);
 
   // Devices that seeded before the `grade`/`source` columns existed need
@@ -251,6 +260,18 @@ export function getStars(): number {
   return Number(getMeta('stars_total') ?? '0');
 }
 
+// A parent-set PIN gates the Parent view so a child can't just tap into it.
+// Stored in `meta` like everything else here — this is a "keep kids from
+// idly peeking" gate, not real security, matching the app's local-only,
+// single-device trust model (there's no account system to secure).
+export function getParentPin(): string | null {
+  return getMeta('parent_pin');
+}
+
+export function setParentPin(pin: string) {
+  setMeta('parent_pin', pin);
+}
+
 function rowToCard(row: CardRow): Card {
   return {
     id: row.id,
@@ -294,6 +315,76 @@ export function getTopicCards(grade: number, subjectId: string, topic: string): 
     [grade, subjectId, topic]
   );
   return rows.map(rowToCard);
+}
+
+// A random sample for Mock Exam mode — pulls from the whole card bank for
+// the scope (not just what's due, unlike getDueCards), since exam prep
+// means covering material regardless of the spaced-repetition schedule.
+// subjectId = null means "mixed", drawing from every subject at this grade.
+export function getExamCards(grade: number, subjectId: string | null, limit: number): Card[] {
+  const rows = subjectId
+    ? db.getAllSync<CardRow>(
+        'SELECT * FROM cards WHERE grade = ? AND subject_id = ? ORDER BY RANDOM() LIMIT ?',
+        [grade, subjectId, limit]
+      )
+    : db.getAllSync<CardRow>('SELECT * FROM cards WHERE grade = ? ORDER BY RANDOM() LIMIT ?', [grade, limit]);
+  return rows.map(rowToCard);
+}
+
+export function getExamCardCount(grade: number, subjectId: string | null): number {
+  const row = subjectId
+    ? db.getFirstSync<{ n: number }>('SELECT COUNT(*) as n FROM cards WHERE grade = ? AND subject_id = ?', [
+        grade,
+        subjectId,
+      ])
+    : db.getFirstSync<{ n: number }>('SELECT COUNT(*) as n FROM cards WHERE grade = ?', [grade]);
+  return row?.n ?? 0;
+}
+
+export type MockExamResult = {
+  grade: number;
+  subjectId: string | null;
+  total: number;
+  correct: number;
+  durationSeconds: number;
+};
+
+export function saveMockExamResult(result: MockExamResult) {
+  db.runSync(
+    'INSERT INTO mock_exams (grade, subject_id, total, correct, duration_seconds, taken_at) VALUES (?, ?, ?, ?, ?, ?)',
+    [result.grade, result.subjectId, result.total, result.correct, result.durationSeconds, new Date().toISOString()]
+  );
+}
+
+export type MockExamHistoryEntry = {
+  id: number;
+  subjectId: string | null;
+  total: number;
+  correct: number;
+  durationSeconds: number;
+  takenAt: string;
+};
+
+export function getRecentMockExams(grade: number, limit = 5): MockExamHistoryEntry[] {
+  const rows = db.getAllSync<{
+    id: number;
+    subject_id: string | null;
+    total: number;
+    correct: number;
+    duration_seconds: number;
+    taken_at: string;
+  }>('SELECT id, subject_id, total, correct, duration_seconds, taken_at FROM mock_exams WHERE grade = ? ORDER BY taken_at DESC LIMIT ?', [
+    grade,
+    limit,
+  ]);
+  return rows.map((r) => ({
+    id: r.id,
+    subjectId: r.subject_id,
+    total: r.total,
+    correct: r.correct,
+    durationSeconds: r.duration_seconds,
+    takenAt: r.taken_at,
+  }));
 }
 
 export function recordAnswer(cardId: string, correct: boolean) {
@@ -378,4 +469,133 @@ export function getNote(grade: number, subjectId: string, topic: string): Note |
     'SELECT title, body FROM notes WHERE grade = ? AND subject_id = ? AND topic = ?',
     [grade, subjectId, topic]
   );
+}
+
+export type ParentSubjectStat = {
+  id: string;
+  name: string;
+  emoji: string;
+  stage: SubjectProgress['stage'];
+  dueCount: number;
+  answered: number;
+  accuracy: number | null; // 0-100, null until the child has answered anything
+};
+
+export type ParentDayActivity = {
+  day: string; // YYYY-MM-DD
+  label: string; // "Mon"
+  count: number;
+  correct: number;
+};
+
+export type ParentWeakTopic = {
+  subjectId: string;
+  subjectName: string;
+  topic: string;
+  attempts: number;
+  accuracy: number; // 0-100
+};
+
+export type ParentSummary = {
+  grade: number;
+  streak: number;
+  stars: number;
+  totalAnswered: number;
+  overallAccuracy: number | null;
+  subjects: ParentSubjectStat[];
+  last7Days: ParentDayActivity[];
+  weakTopics: ParentWeakTopic[];
+  recentMockExams: MockExamHistoryEntry[];
+};
+
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+// Everything the Parent view shows, computed fresh from `reviews`/`cards`
+// each time it's unlocked — no separate tracking table to keep in sync.
+export function getParentSummary(grade: number): ParentSummary {
+  const subjectProgress = getSubjectProgress(grade);
+  const subjectNameById = new Map(subjectProgress.map((s) => [s.id, s.name]));
+
+  const subjectStats = db.getAllSync<{ subject_id: string; total: number; correct: number }>(
+    `SELECT c.subject_id as subject_id, COUNT(*) as total, SUM(r.correct) as correct
+     FROM reviews r JOIN cards c ON r.card_id = c.id
+     WHERE c.grade = ?
+     GROUP BY c.subject_id`,
+    [grade]
+  );
+  const statsBySubject = new Map(subjectStats.map((s) => [s.subject_id, s]));
+
+  const subjects: ParentSubjectStat[] = subjectProgress.map((sp) => {
+    const stat = statsBySubject.get(sp.id);
+    return {
+      id: sp.id,
+      name: sp.name,
+      emoji: sp.emoji,
+      stage: sp.stage,
+      dueCount: sp.dueCount,
+      answered: stat?.total ?? 0,
+      accuracy: stat && stat.total > 0 ? Math.round((stat.correct / stat.total) * 100) : null,
+    };
+  });
+
+  const totalAnswered = subjectStats.reduce((sum, s) => sum + s.total, 0);
+  const totalCorrect = subjectStats.reduce((sum, s) => sum + s.correct, 0);
+  const overallAccuracy = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : null;
+
+  // Last 7 calendar days, oldest first, pre-filled so a quiet day shows as a
+  // gap rather than being skipped.
+  const last7Days: ParentDayActivity[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 86_400_000);
+    last7Days.push({ day: d.toISOString().slice(0, 10), label: DAY_LABELS[d.getDay()], count: 0, correct: 0 });
+  }
+  const dayIndex = new Map(last7Days.map((d, i) => [d.day, i]));
+  const activityRows = db.getAllSync<{ day: string; total: number; correct: number }>(
+    `SELECT substr(r.reviewed_at, 1, 10) as day, COUNT(*) as total, SUM(r.correct) as correct
+     FROM reviews r JOIN cards c ON r.card_id = c.id
+     WHERE c.grade = ? AND substr(r.reviewed_at, 1, 10) >= ?
+     GROUP BY day`,
+    [grade, last7Days[0].day]
+  );
+  for (const row of activityRows) {
+    const idx = dayIndex.get(row.day);
+    if (idx !== undefined) {
+      last7Days[idx].count = row.total;
+      last7Days[idx].correct = row.correct;
+    }
+  }
+
+  // Topics with at least 3 attempts and under 70% accuracy — few enough
+  // attempts and it's noise, above 70% and it's not worth flagging.
+  const topicRows = db.getAllSync<{ subject_id: string; topic: string; total: number; correct: number }>(
+    `SELECT c.subject_id as subject_id, c.topic as topic, COUNT(*) as total, SUM(r.correct) as correct
+     FROM reviews r JOIN cards c ON r.card_id = c.id
+     WHERE c.grade = ?
+     GROUP BY c.subject_id, c.topic
+     HAVING total >= 3`,
+    [grade]
+  );
+  const weakTopics: ParentWeakTopic[] = topicRows
+    .map((t) => ({
+      subjectId: t.subject_id,
+      subjectName: subjectNameById.get(t.subject_id) ?? t.subject_id,
+      topic: t.topic,
+      attempts: t.total,
+      accuracy: Math.round((t.correct / t.total) * 100),
+    }))
+    .filter((t) => t.accuracy < 70)
+    .sort((a, b) => a.accuracy - b.accuracy)
+    .slice(0, 5);
+
+  return {
+    grade,
+    streak: getStreak(),
+    stars: getStars(),
+    totalAnswered,
+    overallAccuracy,
+    subjects,
+    last7Days,
+    weakTopics,
+    recentMockExams: getRecentMockExams(grade),
+  };
 }

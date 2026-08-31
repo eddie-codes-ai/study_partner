@@ -1,4 +1,5 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import Colors from '@/constants/Colors';
@@ -12,6 +13,7 @@ const STAGE = {
 } as const;
 
 export default function ProgressScreen() {
+  const router = useRouter();
   const colors = Colors[useColorScheme()];
   const subjects = useAppStore((s) => s.subjects);
   const stars = useAppStore((s) => s.stars);
@@ -19,7 +21,12 @@ export default function ProgressScreen() {
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={[styles.eyebrow, { color: colors.textFaint }]}>Your garden</Text>
+        <View style={styles.topRow}>
+          <Text style={[styles.eyebrow, { color: colors.textFaint }]}>Your garden</Text>
+          <Pressable onPress={() => router.push('/parent')} hitSlop={8}>
+            <Text style={[styles.parentLink, { color: colors.textFaint }]}>👪 Parents</Text>
+          </Pressable>
+        </View>
         <Text style={[styles.title, { color: colors.text }]}>Grows as each subject gets stronger</Text>
         <Text style={[styles.stars, { color: colors.gold }]}>⭐ {stars} stars earned</Text>
 
@@ -45,7 +52,9 @@ export default function ProgressScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   container: { padding: 20, gap: 6, paddingBottom: 40 },
+  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   eyebrow: { fontSize: 12, fontWeight: '700', letterSpacing: 0.6, textTransform: 'uppercase' },
+  parentLink: { fontSize: 13, fontWeight: '600' },
   title: { fontSize: 22, fontWeight: '800', marginBottom: 4 },
   stars: { fontSize: 14, fontWeight: '700', marginBottom: 16 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },

@@ -28,9 +28,14 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView contentContainerStyle={styles.container}>
-        <Pressable onPress={() => router.push('/onboarding')} hitSlop={8}>
-          <Text style={[styles.greeting, { color: colors.textFaint }]}>Habari! 👋 Grade {grade} · change</Text>
-        </Pressable>
+        <View style={styles.topRow}>
+          <Pressable onPress={() => router.push('/onboarding')} hitSlop={8}>
+            <Text style={[styles.greeting, { color: colors.textFaint }]}>Habari! 👋 Grade {grade} · change</Text>
+          </Pressable>
+          <Pressable onPress={() => router.push('/parent')} hitSlop={8}>
+            <Text style={[styles.greeting, { color: colors.textFaint }]}>👪 Parents</Text>
+          </Pressable>
+        </View>
 
         <View style={[styles.hero, { backgroundColor: colors.tintSoft }]}>
           <Text style={[styles.streak, { color: colors.gold }]}>🔥 {streak}-day streak</Text>
@@ -41,6 +46,17 @@ export default function HomeScreen() {
             {dueCount > 0 ? 'Pick a subject below to start' : 'Come back tomorrow for more'}
           </Text>
         </View>
+
+        <Pressable
+          onPress={() => router.push('/mock-exam')}
+          style={[styles.examCard, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+          <Text style={styles.examEmoji}>📝</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.examTitle, { color: colors.text }]}>Take a mock exam</Text>
+            <Text style={[styles.examHint, { color: colors.textFaint }]}>Timed, exam-style — no peeking at answers</Text>
+          </View>
+          <Text style={{ color: colors.tint, fontSize: 18 }}>→</Text>
+        </Pressable>
 
         <Text style={[styles.sectionLabel, { color: colors.textFaint }]}>Subjects</Text>
         <View style={styles.grid}>
@@ -70,11 +86,16 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   container: { padding: 20, gap: 20, paddingBottom: 40 },
+  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   greeting: { fontSize: 14, fontWeight: '600' },
   hero: { borderRadius: 18, padding: 18, gap: 6 },
   streak: { fontSize: 13, fontWeight: '700' },
   heroTitle: { fontSize: 20, fontWeight: '800' },
   heroHint: { fontSize: 13, fontWeight: '600' },
+  examCard: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 14, borderWidth: 1, padding: 14 },
+  examEmoji: { fontSize: 24 },
+  examTitle: { fontSize: 15, fontWeight: '700' },
+  examHint: { fontSize: 12, marginTop: 2 },
   sectionLabel: { fontSize: 12, fontWeight: '700', letterSpacing: 0.6, textTransform: 'uppercase' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   cell: {
