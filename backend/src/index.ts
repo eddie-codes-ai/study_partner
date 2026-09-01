@@ -11,6 +11,12 @@ export interface Env {
 // output via response_format (see backend README).
 const MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 
+// Vision model for the Photo of notes feature (Add Material). Takes a
+// { prompt, image } pair — image is a raw byte array, not base64 or a data
+// URL — and returns plain text in `.response`, so it doesn't go through
+// runModel/response_format like the text models above; see runVisionModel.
+const VISION_MODEL = '@cf/meta/llama-3.2-11b-vision-instruct';
+
 const NoteSchema = z.object({
   title: z.string(),
   body: z.string().min(80, 'note body too short to be a real explanation'),
@@ -82,6 +88,7 @@ const MOCK = {
     ],
   },
   explanation: { explanation: '[Mock] Here is a fake, simpler explanation — mock mode never calls Workers AI.' },
+  ocr: { text: '[Mock] This is fake text stood in for whatever was in the photo, so you can test the Photo of notes flow without spending any Workers AI neurons.' },
 };
 
 const CORS_HEADERS: Record<string, string> = {
@@ -144,6 +151,41 @@ async function runModel(
   // Workers AI returns either a parsed object or a raw string in `.response`
   // depending on model/runtime version — handle both.
   return (result as { response?: unknown })?.response ?? result;
+}
+
+// Plain-text counterpart to runModel: the vision model takes { prompt, image }
+// rather than { messages, response_format } and only ever returns free text
+// in `.response` — there's no structured-output mode to lean on here, so the
+// prompt itself has to pin down the output shape (see OCR_PROMPT below).
+async function runVisionModel(ai: Ai, prompt: string, image: number[], maxTokens: number): Promise<string> {
+  const result = await ai.run(VISION_MODEL, { prompt, image, max_tokens: maxTokens });
+  const text = (result as { response?: unknown })?.response;
+  return typeof text === 'string' ? text.trim() : '';
+}
+
+// Requests larger than this are rejected before ever reaching Workers AI —
+// the app resizes/compresses the photo client-side (see lib/tutor.ts), so
+// anything past this is almost certainly a bug, not a legitimately huge
+// photo. ~8MB of base64 is ~6MB of actual image.
+const MAX_IMAGE_BASE64_LENGTH = 8_000_000;
+
+const OCR_PROMPT =
+  'Transcribe every word of legible text visible in this photo exactly as written — it\'s a photo of a page from a student\'s notebook or textbook. Return ONLY the transcribed text: no commentary, no headers, no markdown formatting, no describing the photo itself. If there is no legible text anywhere in the photo, respond with exactly: NO_TEXT_FOUND';
+
+async function extractText(env: Env, imageBase64: string): Promise<{ text: string } | null> {
+  if (env.MOCK_MODE === 'true') return MOCK.ocr;
+
+  let bytes: Uint8Array;
+  try {
+    bytes = Buffer.from(imageBase64, 'base64');
+  } catch {
+    return null;
+  }
+  if (bytes.length === 0) return null;
+
+  const raw = await runVisionModel(env.AI, OCR_PROMPT, Array.from(bytes), 1024);
+  if (!raw) return null;
+  return { text: raw === 'NO_TEXT_FOUND' ? '' : raw };
 }
 
 // When a student supplies their own material (Add Material feature), the
@@ -226,6 +268,29 @@ export default {
       body = await request.json();
     } catch {
       return jsonResponse({ error: 'Invalid JSON body' }, 400);
+    }
+
+    // Handled before the grade/subject/topic check below — extracting text
+    // from a photo happens before the student has necessarily settled those
+    // fields, so this route doesn't require them.
+    if (url.pathname === '/extract-text') {
+      const { image } = body ?? {};
+      if (!image || typeof image !== 'string') {
+        return jsonResponse({ error: 'image is required' }, 400);
+      }
+      if (image.length > MAX_IMAGE_BASE64_LENGTH) {
+        return jsonResponse({ error: 'That photo is too large. Please try a smaller or more compressed photo.' }, 413);
+      }
+      try {
+        const result = await extractText(env, image);
+        if (result === null) {
+          return jsonResponse({ error: "Couldn't read that photo. Please try again." }, 502);
+        }
+        return jsonResponse(result);
+      } catch (err) {
+        console.error(err);
+        return jsonResponse({ error: 'Something went wrong reading the photo. Please try again.' }, 500);
+      }
     }
 
     const { grade, subject, topic } = body ?? {};

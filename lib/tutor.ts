@@ -72,6 +72,14 @@ export function generateQuestions(
   return callTutor<{ cards: GeneratedQuestion[] }>('/generate-questions', { grade, subject, topic, count, material });
 }
 
+// Powers the Photo of notes flow (Add Material) — base64Image has no
+// data-URL prefix (see app/(tabs)/add.tsx, which strips it after resizing
+// the photo with expo-image-manipulator). An empty `text` back means the
+// photo was read fine but had no legible text in it, not a failure.
+export function extractTextFromImage(base64Image: string): Promise<{ text: string }> {
+  return callTutor<{ text: string }>('/extract-text', { image: base64Image });
+}
+
 export function explainMore(
   grade: number,
   subject: string,
