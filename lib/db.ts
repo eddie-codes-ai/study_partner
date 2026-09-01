@@ -21,6 +21,8 @@ export type SubjectProgress = {
   emoji: string;
   stage: 'seed' | 'sprout' | 'tree';
   dueCount: number;
+  answered: number;
+  accuracy: number | null; // 0-100, null until the child has answered anything
 };
 
 export type TopicSummary = {
@@ -442,12 +444,29 @@ export function getSubjectProgress(grade: number): SubjectProgress[] {
   );
   const bySubject = new Map(stats.map((s) => [s.subject_id, s]));
 
+  const reviewStats = db.getAllSync<{ subject_id: string; total: number; correct: number }>(
+    `SELECT c.subject_id as subject_id, COUNT(*) as total, SUM(r.correct) as correct
+     FROM reviews r JOIN cards c ON r.card_id = c.id
+     WHERE c.grade = ? GROUP BY c.subject_id`,
+    [grade]
+  );
+  const reviewsBySubject = new Map(reviewStats.map((s) => [s.subject_id, s]));
+
   return SUBJECTS.map((s) => {
     const stat = bySubject.get(s.id);
     const avgInterval = stat?.avg_interval ?? 0;
     const stage: SubjectProgress['stage'] =
       !stat || stat.total === 0 || avgInterval < 1 ? 'seed' : avgInterval >= 7 ? 'tree' : 'sprout';
-    return { id: s.id, name: s.name, emoji: s.emoji, stage, dueCount: stat?.due_count ?? 0 };
+    const reviewStat = reviewsBySubject.get(s.id);
+    return {
+      id: s.id,
+      name: s.name,
+      emoji: s.emoji,
+      stage,
+      dueCount: stat?.due_count ?? 0,
+      answered: reviewStat?.total ?? 0,
+      accuracy: reviewStat && reviewStat.total > 0 ? Math.round((reviewStat.correct / reviewStat.total) * 100) : null,
+    };
   });
 }
 
@@ -471,15 +490,9 @@ export function getNote(grade: number, subjectId: string, topic: string): Note |
   );
 }
 
-export type ParentSubjectStat = {
-  id: string;
-  name: string;
-  emoji: string;
-  stage: SubjectProgress['stage'];
-  dueCount: number;
-  answered: number;
-  accuracy: number | null; // 0-100, null until the child has answered anything
-};
+// Parent view shows exactly the same per-subject numbers as the student's
+// own Progress screen — getSubjectProgress already carries answered/accuracy.
+export type ParentSubjectStat = SubjectProgress;
 
 export type ParentDayActivity = {
   day: string; // YYYY-MM-DD
@@ -513,33 +526,19 @@ const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 // Everything the Parent view shows, computed fresh from `reviews`/`cards`
 // each time it's unlocked — no separate tracking table to keep in sync.
 export function getParentSummary(grade: number): ParentSummary {
-  const subjectProgress = getSubjectProgress(grade);
-  const subjectNameById = new Map(subjectProgress.map((s) => [s.id, s.name]));
+  const subjects = getSubjectProgress(grade);
+  const subjectNameById = new Map(subjects.map((s) => [s.id, s.name]));
 
-  const subjectStats = db.getAllSync<{ subject_id: string; total: number; correct: number }>(
-    `SELECT c.subject_id as subject_id, COUNT(*) as total, SUM(r.correct) as correct
+  // Ungrouped, so this is the exact overall total/correct — summing the
+  // already-rounded per-subject accuracies would drift from the true figure.
+  const overallStat = db.getFirstSync<{ total: number; correct: number }>(
+    `SELECT COUNT(*) as total, SUM(r.correct) as correct
      FROM reviews r JOIN cards c ON r.card_id = c.id
-     WHERE c.grade = ?
-     GROUP BY c.subject_id`,
+     WHERE c.grade = ?`,
     [grade]
   );
-  const statsBySubject = new Map(subjectStats.map((s) => [s.subject_id, s]));
-
-  const subjects: ParentSubjectStat[] = subjectProgress.map((sp) => {
-    const stat = statsBySubject.get(sp.id);
-    return {
-      id: sp.id,
-      name: sp.name,
-      emoji: sp.emoji,
-      stage: sp.stage,
-      dueCount: sp.dueCount,
-      answered: stat?.total ?? 0,
-      accuracy: stat && stat.total > 0 ? Math.round((stat.correct / stat.total) * 100) : null,
-    };
-  });
-
-  const totalAnswered = subjectStats.reduce((sum, s) => sum + s.total, 0);
-  const totalCorrect = subjectStats.reduce((sum, s) => sum + s.correct, 0);
+  const totalAnswered = overallStat?.total ?? 0;
+  const totalCorrect = overallStat?.correct ?? 0;
   const overallAccuracy = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : null;
 
   // Last 7 calendar days, oldest first, pre-filled so a quiet day shows as a
