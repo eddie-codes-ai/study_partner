@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 import * as db from './db';
-import type { SubjectProgress } from './db';
+import type { LastStudied, SubjectProgress } from './db';
 
 type AppState = {
   ready: boolean;
@@ -10,6 +10,7 @@ type AppState = {
   stars: number;
   dueCount: number;
   subjects: SubjectProgress[];
+  lastStudied: LastStudied | null;
   hydrate: () => void;
   setGrade: (grade: string) => void;
   refresh: () => void;
@@ -22,6 +23,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   stars: 0,
   dueCount: 0,
   subjects: [],
+  lastStudied: null,
 
   hydrate: () => {
     db.initDb();
@@ -34,16 +36,22 @@ export const useAppStore = create<AppState>((set, get) => ({
       stars: db.getStars(),
       dueCount: gradeNum ? db.getDueCards(gradeNum, 999).length : 0,
       subjects: gradeNum ? db.getSubjectProgress(gradeNum) : [],
+      lastStudied: db.getLastStudied(),
     });
   },
 
   setGrade: (grade: string) => {
     db.setGrade(grade);
+    // A remembered topic from the previous grade may not exist in this
+    // one's content, so "Continue where you left off" shouldn't survive
+    // a grade change.
+    db.clearLastStudied();
     const gradeNum = Number(grade);
     set({
       grade,
       dueCount: db.getDueCards(gradeNum, 999).length,
       subjects: db.getSubjectProgress(gradeNum),
+      lastStudied: null,
     });
   },
 
@@ -56,6 +64,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       stars: db.getStars(),
       dueCount: gradeNum ? db.getDueCards(gradeNum, 999).length : 0,
       subjects: gradeNum ? db.getSubjectProgress(gradeNum) : [],
+      lastStudied: db.getLastStudied(),
     });
   },
 }));

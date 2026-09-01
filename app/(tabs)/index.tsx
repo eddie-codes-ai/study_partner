@@ -16,6 +16,8 @@ export default function HomeScreen() {
   const streak = useAppStore((s) => s.streak);
   const dueCount = useAppStore((s) => s.dueCount);
   const subjects = useAppStore((s) => s.subjects);
+  const lastStudied = useAppStore((s) => s.lastStudied);
+  const lastStudiedSubject = subjects.find((s) => s.id === lastStudied?.subjectId) ?? null;
 
   useEffect(() => {
     if (grade === null) {
@@ -46,6 +48,28 @@ export default function HomeScreen() {
             {dueCount > 0 ? 'Pick a subject below to start' : 'Come back tomorrow for more'}
           </Text>
         </View>
+
+        {lastStudied && lastStudiedSubject && (
+          <Pressable
+            onPress={() =>
+              router.push(
+                `/session?subject=${lastStudied.subjectId}${
+                  lastStudied.topic ? `&topic=${encodeURIComponent(lastStudied.topic)}` : ''
+                }`
+              )
+            }
+            style={[styles.examCard, { backgroundColor: colors.surface, borderColor: colors.line }]}>
+            <Text style={styles.examEmoji}>{lastStudiedSubject.emoji}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.examTitle, { color: colors.text }]}>
+                Continue {lastStudiedSubject.name}
+                {lastStudied.topic ? ` · ${lastStudied.topic}` : ''}
+              </Text>
+              <Text style={[styles.examHint, { color: colors.textFaint }]}>Pick up right where you left off</Text>
+            </View>
+            <Text style={{ color: colors.tint, fontSize: 18 }}>→</Text>
+          </Pressable>
+        )}
 
         <Pressable
           onPress={() => router.push('/mock-exam')}

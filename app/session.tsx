@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -54,6 +54,17 @@ export default function SessionScreen() {
   const [selected, setSelected] = useState<number | null>(null);
   const [correctCount, setCorrectCount] = useState(0);
   const [starsEarned, setStarsEarned] = useState(0);
+
+  // Record this as "last studied" once we know there's actually something
+  // to practice — an empty set (e.g. a freshly AI-generated topic with no
+  // cards yet) shouldn't become a "Continue where you left off" dead end.
+  useEffect(() => {
+    if (subject && cards.length > 0) {
+      db.setLastStudied(subject, topic ?? null);
+    }
+    // Runs once per session mount — subject/topic are route params that
+    // don't change without a full remount anyway.
+  }, []);
 
   const card = cards[index];
   const isLast = index === cards.length - 1;

@@ -414,6 +414,32 @@ export function recordAnswer(cardId: string, correct: boolean) {
   }
 }
 
+export type LastStudied = {
+  subjectId: string;
+  topic: string | null; // null means subject-wide due review, not one topic
+};
+
+// Recorded when a session actually starts (see app/session.tsx), so "Continue
+// where you left off" on Home always points at real, practicable content —
+// never a topic that turned out to have zero cards.
+export function setLastStudied(subjectId: string, topic: string | null) {
+  setMeta('last_subject_id', subjectId);
+  setMeta('last_topic', topic ?? '');
+}
+
+export function getLastStudied(): LastStudied | null {
+  const subjectId = getMeta('last_subject_id');
+  if (!subjectId) return null;
+  return { subjectId, topic: getMeta('last_topic') || null };
+}
+
+// Cleared on grade change (see store.ts) — a remembered topic from the old
+// grade's content may not exist for the new one.
+export function clearLastStudied() {
+  setMeta('last_subject_id', '');
+  setMeta('last_topic', '');
+}
+
 // Called once when a session ends (not per card) — advances the streak at
 // most once per calendar day.
 export function completeSession() {
