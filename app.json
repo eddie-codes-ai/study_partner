@@ -34,7 +34,14 @@
           "backgroundColor": "#F4F6EF"
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Kua uses your photos so you can turn a page from your book into study notes.",
+          "cameraPermission": "Kua uses your camera so you can snap a page from your book and turn it into study notes."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

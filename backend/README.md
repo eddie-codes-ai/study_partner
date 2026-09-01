@@ -7,13 +7,18 @@ never holds an API key directly. Three endpoints, all POST, all requiring an
 - `POST /generate-note` — `{ grade, subject, topic }` → `{ title, body }`
 - `POST /generate-questions` — `{ grade, subject, topic, count? }` → `{ cards: [...] }`
 - `POST /explain-more` — `{ grade, subject, topic, previousText, studentQuestion? }` → `{ explanation }`
+- `POST /extract-text` — `{ image }` (base64, no data-URL prefix) → `{ text }`
+  — powers the Photo of notes flow; doesn't require grade/subject/topic.
+  `text` is `""` (not an error) when the photo has no legible text.
 
 Runs on **Cloudflare Workers AI** (free tier: 10,000 neurons/day, resets
 daily, no billing needed) using `@cf/meta/llama-3.1-8b-instruct-fast` with
-JSON-schema structured output. Swap the `MODEL` constant in `src/index.ts` if
-you ever want a different Workers AI model, or a paid provider like Claude —
-the request/response shapes the app expects (`lib/tutor.ts`) won't need to
-change either way.
+JSON-schema structured output for the three endpoints above, and
+`@cf/meta/llama-3.2-11b-vision-instruct` (plain-text output, no structured
+mode) for `/extract-text`. Swap the `MODEL`/`VISION_MODEL` constants in
+`src/index.ts` if you ever want different Workers AI models, or a paid
+provider like Claude — the request/response shapes the app expects
+(`lib/tutor.ts`) won't need to change either way.
 
 ## Mock mode — test for free before touching any AI model
 

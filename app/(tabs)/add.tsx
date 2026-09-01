@@ -1,7 +1,10 @@
+import * as ImageManipulator from 'expo-image-manipulator';
+import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -18,7 +21,18 @@ import { useColorScheme } from '@/components/useColorScheme';
 import * as db from '@/lib/db';
 import { SUBJECTS } from '@/lib/seed';
 import { useAppStore } from '@/lib/store';
-import { generateNote, generateQuestions, TutorError, type GeneratedQuestion } from '@/lib/tutor';
+import { extractTextFromImage, generateNote, generateQuestions, TutorError, type GeneratedQuestion } from '@/lib/tutor';
+
+// Cap the longest edge before upload — keeps the request small/fast on a
+// student's mobile data and well under the backend's size guard, without
+// losing enough resolution to make the text unreadable to the model.
+const MAX_PHOTO_DIMENSION = 1600;
+
+type PhotoState =
+  | { status: 'idle' }
+  | { status: 'extracting'; uri: string }
+  | { status: 'done'; uri: string }
+  | { status: 'error'; message: string };
 
 type FlowState =
   | { status: 'idle' }
@@ -37,6 +51,7 @@ export default function AddMaterialScreen() {
   const [topic, setTopic] = useState('');
   const [material, setMaterial] = useState('');
   const [flow, setFlow] = useState<FlowState>({ status: 'idle' });
+  const [photo, setPhoto] = useState<PhotoState>({ status: 'idle' });
 
   const gradeNum = grade ? Number(grade) : null;
   const subject = SUBJECTS.find((s) => s.id === subjectId) ?? null;
@@ -67,12 +82,72 @@ export default function AddMaterialScreen() {
     setFlow({ status: 'saved' });
   }
 
+  async function handlePickPhoto(source: 'camera' | 'library') {
+    // The whole flow is wrapped in one try/catch — permission requests and
+    // the native picker can both throw (denied-forever on Android, no
+    // camera on an emulator, user backgrounding mid-pick, etc.), and an
+    // uncaught rejection here left `photo` stuck on 'idle' with zero visible
+    // feedback, which read as "nothing happens when I upload a photo."
+    try {
+      const permission =
+        source === 'camera'
+          ? await ImagePicker.requestCameraPermissionsAsync()
+          : await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        setPhoto({
+          status: 'error',
+          message:
+            source === 'camera'
+              ? 'Kua needs camera access to take a photo. Check your phone\'s Settings and try again.'
+              : 'Kua needs photo access to pick a photo. Check your phone\'s Settings and try again.',
+        });
+        return;
+      }
+
+      const result =
+        source === 'camera'
+          ? await ImagePicker.launchCameraAsync({ quality: 0.8 })
+          : await ImagePicker.launchImageLibraryAsync({ quality: 0.8, mediaTypes: ['images'] });
+      if (result.canceled || !result.assets[0]) return;
+
+      const picked = result.assets[0];
+      setPhoto({ status: 'extracting', uri: picked.uri });
+
+      // Downscale + compress before upload — a fresh phone photo is easily
+      // 8-12MB, far more resolution than the model needs to read handwriting
+      // or print, and slow to send on mobile data.
+      const resized = await ImageManipulator.manipulateAsync(
+        picked.uri,
+        [{ resize: { width: MAX_PHOTO_DIMENSION } }],
+        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+      );
+      if (!resized.base64) throw new TutorError("Couldn't process that photo. Please try again.");
+
+      const { text } = await extractTextFromImage(resized.base64);
+      if (!text) {
+        setPhoto({
+          status: 'error',
+          message: "Couldn't find any readable text in that photo — try a clearer, well-lit shot.",
+        });
+        return;
+      }
+      setMaterial((prev) => (prev.trim() ? `${prev.trim()}\n\n${text}` : text));
+      setPhoto({ status: 'done', uri: picked.uri });
+    } catch (err) {
+      setPhoto({
+        status: 'error',
+        message: err instanceof TutorError ? err.message : 'Something went wrong reading that photo. Please try again.',
+      });
+    }
+  }
+
   function handleGoToTopic() {
     if (!subject) return;
     setSubjectId(null);
     setTopic('');
     setMaterial('');
     setFlow({ status: 'idle' });
+    setPhoto({ status: 'idle' });
     router.push(`/topics?subject=${subject.id}`);
   }
 
@@ -198,7 +273,49 @@ export default function AddMaterialScreen() {
               <View style={[styles.option, { borderColor: colors.line }]}>
                 <Text style={styles.optionEmoji}>📷</Text>
                 <Text style={[styles.optionTitle, { color: colors.text }]}>Photo of notes</Text>
-                <Text style={[styles.optionBody, { color: colors.textSoft }]}>Coming soon — snap a page from your book</Text>
+                <Text style={[styles.optionBody, { color: colors.textSoft }]}>
+                  Snap a page from your book — Kua will read the text into your notes above.
+                </Text>
+
+                {photo.status === 'extracting' && (
+                  <View style={styles.photoRow}>
+                    <Image source={{ uri: photo.uri }} style={styles.photoThumb} />
+                    <View style={styles.photoStatusRow}>
+                      <ActivityIndicator color={colors.tint} />
+                      <Text style={[styles.aiHint, { color: colors.tint }]}>Reading your photo…</Text>
+                    </View>
+                  </View>
+                )}
+
+                {photo.status === 'done' && (
+                  <View style={styles.photoRow}>
+                    <Image source={{ uri: photo.uri }} style={styles.photoThumb} />
+                    <View style={styles.photoStatusRow}>
+                      <Text style={[styles.aiHint, { color: colors.tint }]}>✅ Added to your notes above</Text>
+                    </View>
+                  </View>
+                )}
+
+                {photo.status === 'error' && (
+                  <Text style={[styles.aiHint, { color: colors.gold, marginTop: 4 }]}>{photo.message}</Text>
+                )}
+
+                {(photo.status === 'idle' || photo.status === 'error' || photo.status === 'done') && (
+                  <View style={styles.photoButtonRow}>
+                    <Pressable
+                      onPress={() => handlePickPhoto('camera')}
+                      style={[styles.ghostButton, { borderColor: colors.tint, flex: 1 }]}>
+                      <Text style={[styles.ghostButtonLabel, { color: colors.tint }]}>
+                        {photo.status === 'done' ? '📸 Retake' : '📸 Take photo'}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => handlePickPhoto('library')}
+                      style={[styles.ghostButton, { borderColor: colors.tint, flex: 1 }]}>
+                      <Text style={[styles.ghostButtonLabel, { color: colors.tint }]}>🖼️ Choose photo</Text>
+                    </Pressable>
+                  </View>
+                )}
               </View>
             </>
           )}
@@ -253,10 +370,13 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 16,
     gap: 4,
-    opacity: 0.6,
     marginTop: 8,
   },
   optionEmoji: { fontSize: 22 },
   optionTitle: { fontSize: 15, fontWeight: '700' },
   optionBody: { fontSize: 13 },
+  photoButtonRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  photoRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 },
+  photoThumb: { width: 48, height: 48, borderRadius: 8 },
+  photoStatusRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 },
 });
