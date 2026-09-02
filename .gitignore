@@ -37,6 +37,10 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# curriculum grounding tool review output — scratch material, not shipped
+# content (see scripts/curriculum/README.md)
+/scripts/curriculum/output/
+
 # generated native folders
 /ios
 /android
